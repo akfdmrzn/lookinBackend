@@ -8,6 +8,7 @@
   "author": "TahaDgn",
   "private": true,
   "scripts": {
+    "start": "node dist/src/main.js",
     "launch": "tsc && node dist/src/main.js"
   },
   "dependencies": {
