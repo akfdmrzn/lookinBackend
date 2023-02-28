@@ -76,7 +76,9 @@ const createPaymentAccount = async (req, res, next) => {
 exports.createPaymentAccount = createPaymentAccount;
 const handleStripeWebhooks = async (req, res, next) => {
     try {
-        paymentWebhookHandler.stripeWebhookExecutorWrapper(req);
+        console.log('Before execution');
+        await paymentWebhookHandler.stripeWebhookExecutorWrapper(req);
+        console.log('After execution');
         res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: 'success' });
         next();
     }

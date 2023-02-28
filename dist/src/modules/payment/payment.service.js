@@ -77,6 +77,7 @@ const createPaymentAccountLink = async (dto) => {
 };
 exports.createPaymentAccountLink = createPaymentAccountLink;
 const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) => {
+    console.log('Execution has been started');
     const { body: { data: { object: paymentIntent } } } = webhookRequest;
     const { status, transfer_group: transferGroup, metadata: metadataKeys } = paymentIntent;
     if (status != 'succeeded' || !transferGroup)
@@ -98,6 +99,7 @@ const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) =>
         transferCreationPromises.push(transferCreationPromise);
     }
     await Promise.all(transferCreationPromises);
+    console.log('Execution has been finished');
 };
 exports.handlePaymentIntentStatusChangeForTransferring = handlePaymentIntentStatusChangeForTransferring;
 const createTradeInfo = (products) => {
