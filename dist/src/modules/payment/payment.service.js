@@ -79,8 +79,8 @@ exports.createPaymentAccountLink = createPaymentAccountLink;
 const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) => {
     console.log('Execution has been started');
     const { body: { data: { object: paymentIntent } } } = webhookRequest;
-    const { id, status, transfer_group: transferGroup, metadata: metadataKeys, payment_method: paymentMethod } = paymentIntent;
-    await stripe.paymentIntents.confirm(id, { payment_method: paymentMethod });
+    const { id: paymentIntentId, status, transfer_group: transferGroup, metadata: metadataKeys, charges: { data: charges } } = paymentIntent;
+    const { id: chargeId } = charges[0];
     if (status != 'succeeded' || !transferGroup)
         return;
     const transferCreationPromises = [];
@@ -96,6 +96,7 @@ const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) =>
             destination: sellerId,
             amount: Number(amount),
             currency: 'gbp',
+            source_transaction: chargeId,
         });
         transferCreationPromises.push(transferCreationPromise);
     }
