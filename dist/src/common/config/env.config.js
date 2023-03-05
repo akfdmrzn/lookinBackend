@@ -17,6 +17,7 @@ exports.ENV_VARS = {
     PROJECT_ID: 'PROJECT_ID',
     PRIVATE_KEY: 'PRIVATE_KEY',
     CLIENT_EMAIL: 'CLIENT_EMAIL',
+    WEBHOOK_SIGNING_SECRET: 'WEBHOOK_SIGNING_SECRET'
 };
 const getValue = (key) => process.env[key];
 exports.getValue = getValue;

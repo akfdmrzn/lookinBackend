@@ -1,10 +1,33 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handlePaymentIntentStatusChangeForTransferring = exports.createPaymentAccountLink = exports.createPaymentAccount = exports.createPaymentIntentWithoutPaymentMethod = void 0;
 const uuid_1 = require("uuid");
 const config_1 = require("../../common/config");
 const errors_1 = require("../../common/errors");
-const stripe_service_1 = require("../stripe/stripe.service");
+const stripeService = __importStar(require("../stripe/stripe.service"));
 const REFLECT_STRIPE_FEES_TO_SELLERS = (0, config_1.getValue)(config_1.ENV_VARS.REFLECT_STRIPE_FEES_TO_SELLERS);
 const PAYMENT_INFRA_PROVIDER_FEE_PERCENT = (0, config_1.getNumberValue)(config_1.ENV_VARS.PAYMENT_INFRA_PROVIDER_FEE_PERCENT);
 const PAYMENT_INFRA_PROVIDER_FEE_CONSTANT = (0, config_1.getNumberValue)(config_1.ENV_VARS.PAYMENT_INFRA_PROVIDER_FEE_CONSTANT);
@@ -15,12 +38,12 @@ const SELLER_SHARE_PAYMENT_INTENT_META_KEY = 'share_of';
 const SELLER_SHARE_PAYMENT_INTENT_META_KEY_SEPARATOR = '.PISOS.';
 const createPaymentIntentWithoutPaymentMethod = async (dto) => {
     const { productIds } = dto;
-    const { data: products } = await stripe_service_1.stripe.products.list({ ids: productIds, expand: ['data.default_price'] });
+    const { data: products } = await stripeService.stripe.products.list({ ids: productIds, expand: ['data.default_price'] });
     if (products.length < 1) {
         throw new errors_1.DomainError(errors_1.API_ERRORS[errors_1.ApiError.CannotCheckoutForNoProduct]);
     }
     const { checkoutAmount, sellersWithShares } = createTradeInfo(products);
-    const { client_secret: clientSecret } = await stripe_service_1.stripe.paymentIntents.create({
+    const { client_secret: clientSecret } = await stripeService.stripe.paymentIntents.create({
         amount: checkoutAmount,
         currency: 'gbp',
         transfer_group: (0, uuid_1.v4)(),
@@ -33,7 +56,7 @@ const createPaymentIntentWithoutPaymentMethod = async (dto) => {
 exports.createPaymentIntentWithoutPaymentMethod = createPaymentIntentWithoutPaymentMethod;
 const createPaymentAccount = async (dto) => {
     const { email } = dto;
-    const { id: paymentAccountId } = await stripe_service_1.stripe.accounts.create({
+    const { id: paymentAccountId } = await stripeService.stripe.accounts.create({
         type: 'express',
         country: 'GB',
         email,
@@ -49,7 +72,7 @@ const createPaymentAccount = async (dto) => {
 exports.createPaymentAccount = createPaymentAccount;
 const createPaymentAccountLink = async (dto) => {
     const { accountId } = dto;
-    const { url: accountUrl } = await stripe_service_1.stripe.accountLinks.create({
+    const { url: accountUrl } = await stripeService.stripe.accountLinks.create({
         account: accountId,
         refresh_url: 'https://Lookingexample.com/reauth',
         return_url: 'https://Lookingexample.com/return',
@@ -74,7 +97,7 @@ const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) =>
             metadataKey.split(SELLER_SHARE_PAYMENT_INTENT_META_KEY_SEPARATOR).at(1),
             metadataKeys[metadataKey],
         ];
-        const transferCreationPromise = stripe_service_1.stripe.transfers.create({
+        const transferCreationPromise = stripeService.stripe.transfers.create({
             transfer_group: transferGroup,
             destination: sellerId,
             amount: Number(amount),

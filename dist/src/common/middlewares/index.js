@@ -17,4 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./dto-validation.middleware"), exports);
 __exportStar(require("./error-handler.middleware"), exports);
 __exportStar(require("./auth.middleware"), exports);
+__exportStar(require("./body-parser.middleware"), exports);
 //# sourceMappingURL=index.js.map

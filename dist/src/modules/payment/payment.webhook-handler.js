@@ -9,11 +9,13 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stripeWebhookExecutorWrapper = void 0;
 const payment_service_1 = require("./payment.service");
+const stripe_service_1 = require("../stripe/stripe.service");
 const WEBHOOK_EVENT_EXECUTER_FUNC_MAP = {
     'payment_intent.succeeded': [payment_service_1.handlePaymentIntentStatusChangeForTransferring]
 };
 const stripeWebhookExecutorWrapper = async (request) => {
     var _a, e_1, _b, _c;
+    (0, stripe_service_1.validateWebhookSign)(request);
     const { body: { type } } = request;
     const executorList = WEBHOOK_EVENT_EXECUTER_FUNC_MAP[type];
     if (!executorList)

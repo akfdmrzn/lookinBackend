@@ -28,5 +28,9 @@ exports.API_ERRORS = {
         message: 'Unprocessable entry',
         statusCode: http_status_codes_1.StatusCodes.UNPROCESSABLE_ENTITY,
     },
+    [api_error_enum_1.ApiError.FakeWebhook]: {
+        message: 'FakeWebhook',
+        statusCode: http_status_codes_1.StatusCodes.BAD_REQUEST,
+    }
 };
 //# sourceMappingURL=api.errors.const.js.map

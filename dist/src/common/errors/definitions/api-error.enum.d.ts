@@ -5,5 +5,6 @@ export declare enum ApiError {
     BalanceExceeded = "Balance Exceeded",
     TransferringFailure = "Transferring Failure",
     CannotCheckoutForNoProduct = "Can`t Checkout For No Product",
-    BadInput = "Bad Input"
+    BadInput = "Bad Input",
+    FakeWebhook = "FakeWebhook"
 }

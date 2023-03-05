@@ -11,6 +11,7 @@ export declare const ENV_VARS: {
     PROJECT_ID: string;
     PRIVATE_KEY: string;
     CLIENT_EMAIL: string;
+    WEBHOOK_SIGNING_SECRET: string;
 };
 export declare const getValue: (key: string) => string;
 export declare const getFirebaseCredentials: () => import("firebase-admin/app").Credential;

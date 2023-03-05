@@ -10,5 +10,6 @@ var ApiError;
     ApiError["TransferringFailure"] = "Transferring Failure";
     ApiError["CannotCheckoutForNoProduct"] = "Can`t Checkout For No Product";
     ApiError["BadInput"] = "Bad Input";
+    ApiError["FakeWebhook"] = "FakeWebhook";
 })(ApiError = exports.ApiError || (exports.ApiError = {}));
 //# sourceMappingURL=api-error.enum.js.map

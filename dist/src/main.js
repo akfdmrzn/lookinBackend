@@ -18,10 +18,11 @@ const middlewares_1 = require("./common/middlewares");
 (0, config_1.validateIntegrityOfEnvVars)();
 const PORT = (0, config_2.getNumberValue)(config_1.ENV_VARS.PORT);
 const app = (0, express_1.default)();
-app.use(express_1.default.json());
+app.use(express_1.default.json({
+    verify: middlewares_1.bodyParserMiddleware
+}));
 app.use((0, xss_clean_1.default)());
 app.use((0, helmet_1.default)());
-app.use(middlewares_1.authMiddleware);
 app.use(payment_routes_1.paymentRoutes, product_routes_1.productRoutes);
 app.use(middlewares_1.errorHandlerMiddleware);
 app.use((0, express_rate_limit_1.default)({
