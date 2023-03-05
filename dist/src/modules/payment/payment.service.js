@@ -19,7 +19,7 @@ const createPaymentIntentWithoutPaymentMethod = async (dto) => {
     if (products.length < 1) {
         throw new errors_1.DomainError(errors_1.API_ERRORS[errors_1.ApiError.CannotCheckoutForNoProduct]);
     }
-    const { checkoutAmount, sellersWithShares, platformFee } = createTradeInfo(products);
+    const { checkoutAmount, sellersWithShares } = createTradeInfo(products);
     const { client_secret: clientSecret } = await stripe_service_1.stripe.paymentIntents.create({
         amount: checkoutAmount,
         currency: 'gbp',
@@ -94,6 +94,7 @@ const createTradeInfo = (products) => {
     };
     for (const product of products) {
         const { default_price: price, metadata: { sellerId } } = product;
+        console.log('PRODUCT', product);
         const { unit_amount: amount } = price;
         const parsedAmount = Number(amount);
         tradeInfo.checkoutAmount = tradeInfo.checkoutAmount + parsedAmount;
