@@ -12,7 +12,7 @@ const PLATFORM_FEE_PERCENT = REFLECT_STRIPE_FEES_TO_SELLERS == 'false'
     ? (0, config_1.getNumberValue)(config_1.ENV_VARS.PLATFORM_FEE_PERCENT) - PAYMENT_INFRA_PROVIDER_FEE_PERCENT
     : (0, config_1.getNumberValue)(config_1.ENV_VARS.PLATFORM_FEE_PERCENT);
 const SELLER_SHARE_PAYMENT_INTENT_META_KEY = 'share_of';
-const SELLER_SHARE_PAYMENT_INTENT_META_KEY_SEPARATOR = 'PISOS';
+const SELLER_SHARE_PAYMENT_INTENT_META_KEY_SEPARATOR = '.PISOS.';
 const createPaymentIntentWithoutPaymentMethod = async (dto) => {
     const { productIds } = dto;
     const { data: products } = await stripe_service_1.stripe.products.list({ ids: productIds, expand: ['data.default_price'] });

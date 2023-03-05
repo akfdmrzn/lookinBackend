@@ -8,10 +8,11 @@ export declare const ENV_VARS: {
     PAYMENT_INFRA_PROVIDER_FEE_PERCENT: string;
     PAYMENT_INFRA_PROVIDER_FEE_CONSTANT: string;
     REFLECT_STRIPE_FEES_TO_SELLERS: string;
-    FIREBASE_AUTH_NAME: string;
-    FIREBASE_AUTH_API_KEY: string;
-    FIREBASE_AUTH_PROJECT_ID: string;
+    PROJECT_ID: string;
+    PRIVATE_KEY: string;
+    CLIENT_EMAIL: string;
 };
 export declare const getValue: (key: string) => string;
+export declare const getFirebaseCredentials: () => import("firebase-admin/app").Credential;
 export declare const getNumberValue: (key: any) => number;
 export declare const validateIntegrityOfEnvVars: () => void;
