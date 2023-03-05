@@ -24,7 +24,6 @@ const createPaymentIntentWithoutPaymentMethod = async (dto) => {
         amount: checkoutAmount,
         currency: 'gbp',
         transfer_group: (0, uuid_1.v4)(),
-        application_fee_amount: platformFee,
         metadata: Object.assign({}, Object.fromEntries(sellersWithShares)),
     });
     return {

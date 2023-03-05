@@ -2,7 +2,7 @@
   "name": "lookin-backend",
   "version": "0.0.1",
   "engines": {
-    "node": "16.15.0"
+    "node": "16.x"
   },
   "description": "Lookin app TS backend project",
   "main": "src/main.ts",
