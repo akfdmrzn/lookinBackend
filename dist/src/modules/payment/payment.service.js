@@ -85,8 +85,7 @@ const createPaymentAccountLink = async (dto) => {
 exports.createPaymentAccountLink = createPaymentAccountLink;
 const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) => {
     const { body: { data: { object: paymentIntent } } } = webhookRequest;
-    const { status, transfer_group: transferGroup, metadata: metadataKeys, charges: { data: charges } } = paymentIntent;
-    const { id: chargeId } = charges[0];
+    const { status, transfer_group: transferGroup, metadata: metadataKeys, latest_charge: chargeId } = paymentIntent;
     if (status != 'succeeded' || !transferGroup)
         return;
     const transferCreationPromises = [];
