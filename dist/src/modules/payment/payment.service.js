@@ -1,28 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handlePaymentIntentStatusChangeForTransferring = exports.createPaymentAccountLink = exports.createProduct = exports.createPaymentAccount = exports.createPaymentIntentWithoutPaymentMethod = void 0;
-const stripe_1 = require("stripe");
+exports.handlePaymentIntentStatusChangeForTransferring = exports.createPaymentAccountLink = exports.createPaymentAccount = exports.createPaymentIntentWithoutPaymentMethod = void 0;
 const uuid_1 = require("uuid");
 const config_1 = require("../../common/config");
 const errors_1 = require("../../common/errors");
-const STRIPE_PRIVATE_KEY = (0, config_1.getValue)(config_1.ENV_VARS.STRIPE_PRIVATE_KEY);
+const stripe_service_1 = require("../stripe/stripe.service");
+const REFLECT_STRIPE_FEES_TO_SELLERS = (0, config_1.getValue)(config_1.ENV_VARS.REFLECT_STRIPE_FEES_TO_SELLERS);
+const PAYMENT_INFRA_PROVIDER_FEE_PERCENT = (0, config_1.getNumberValue)(config_1.ENV_VARS.PAYMENT_INFRA_PROVIDER_FEE_PERCENT);
+const PAYMENT_INFRA_PROVIDER_FEE_CONSTANT = (0, config_1.getNumberValue)(config_1.ENV_VARS.PAYMENT_INFRA_PROVIDER_FEE_CONSTANT);
+const PLATFORM_FEE_PERCENT = REFLECT_STRIPE_FEES_TO_SELLERS == 'false'
+    ? (0, config_1.getNumberValue)(config_1.ENV_VARS.PLATFORM_FEE_PERCENT) - PAYMENT_INFRA_PROVIDER_FEE_PERCENT
+    : (0, config_1.getNumberValue)(config_1.ENV_VARS.PLATFORM_FEE_PERCENT);
 const SELLER_SHARE_PAYMENT_INTENT_META_KEY = 'share_of';
 const SELLER_SHARE_PAYMENT_INTENT_META_KEY_SEPARATOR = ':<<>>:';
-const stripe = new stripe_1.Stripe(STRIPE_PRIVATE_KEY, {
-    apiVersion: '2022-11-15',
-    typescript: true
-});
 const createPaymentIntentWithoutPaymentMethod = async (dto) => {
     const { productIds } = dto;
-    const { data: products } = await stripe.products.list({ ids: productIds, expand: ['data.default_price'] });
+    const { data: products } = await stripe_service_1.stripe.products.list({ ids: productIds, expand: ['data.default_price'] });
     if (products.length < 1) {
         throw new errors_1.DomainError(errors_1.API_ERRORS[errors_1.ApiError.CannotCheckoutForNoProduct]);
     }
-    const { checkoutAmount, sellersWithShares } = createTradeInfo(products);
-    const { client_secret: clientSecret } = await stripe.paymentIntents.create({
+    const { checkoutAmount, sellersWithShares, platformFee } = createTradeInfo(products);
+    const { client_secret: clientSecret } = await stripe_service_1.stripe.paymentIntents.create({
         amount: checkoutAmount,
         currency: 'gbp',
         transfer_group: (0, uuid_1.v4)(),
+        application_fee_amount: platformFee,
         metadata: Object.assign({}, Object.fromEntries(sellersWithShares)),
     });
     return {
@@ -32,7 +34,7 @@ const createPaymentIntentWithoutPaymentMethod = async (dto) => {
 exports.createPaymentIntentWithoutPaymentMethod = createPaymentIntentWithoutPaymentMethod;
 const createPaymentAccount = async (dto) => {
     const { email } = dto;
-    const { id: paymentAccountId } = await stripe.accounts.create({
+    const { id: paymentAccountId } = await stripe_service_1.stripe.accounts.create({
         type: 'express',
         country: 'GB',
         email,
@@ -46,26 +48,9 @@ const createPaymentAccount = async (dto) => {
     };
 };
 exports.createPaymentAccount = createPaymentAccount;
-const createProduct = async (dto) => {
-    const { name, price, currency, sellerId } = dto;
-    const { id: productId } = await stripe.products.create({
-        name,
-        default_price_data: {
-            currency,
-            unit_amount: price,
-        },
-        metadata: {
-            sellerId,
-        }
-    });
-    return {
-        id: productId,
-    };
-};
-exports.createProduct = createProduct;
 const createPaymentAccountLink = async (dto) => {
     const { accountId } = dto;
-    const { url: accountUrl } = await stripe.accountLinks.create({
+    const { url: accountUrl } = await stripe_service_1.stripe.accountLinks.create({
         account: accountId,
         refresh_url: 'https://Lookingexample.com/reauth',
         return_url: 'https://Lookingexample.com/return',
@@ -77,9 +62,8 @@ const createPaymentAccountLink = async (dto) => {
 };
 exports.createPaymentAccountLink = createPaymentAccountLink;
 const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) => {
-    console.log('Execution has been started');
     const { body: { data: { object: paymentIntent } } } = webhookRequest;
-    const { id: paymentIntentId, status, transfer_group: transferGroup, metadata: metadataKeys, charges: { data: charges } } = paymentIntent;
+    const { status, transfer_group: transferGroup, metadata: metadataKeys, charges: { data: charges } } = paymentIntent;
     const { id: chargeId } = charges[0];
     if (status != 'succeeded' || !transferGroup)
         return;
@@ -91,7 +75,7 @@ const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) =>
             metadataKey.split(SELLER_SHARE_PAYMENT_INTENT_META_KEY_SEPARATOR).at(1),
             metadataKeys[metadataKey],
         ];
-        const transferCreationPromise = stripe.transfers.create({
+        const transferCreationPromise = stripe_service_1.stripe.transfers.create({
             transfer_group: transferGroup,
             destination: sellerId,
             amount: Number(amount),
@@ -101,13 +85,13 @@ const handlePaymentIntentStatusChangeForTransferring = async (webhookRequest) =>
         transferCreationPromises.push(transferCreationPromise);
     }
     await Promise.all(transferCreationPromises);
-    console.log('Execution has been finished');
 };
 exports.handlePaymentIntentStatusChangeForTransferring = handlePaymentIntentStatusChangeForTransferring;
 const createTradeInfo = (products) => {
     const tradeInfo = {
         checkoutAmount: 0,
         sellersWithShares: new Map(),
+        platformFee: 0,
     };
     for (const product of products) {
         const { default_price: price, metadata: { sellerId } } = product;
@@ -116,6 +100,7 @@ const createTradeInfo = (products) => {
         tradeInfo.checkoutAmount = tradeInfo.checkoutAmount + parsedAmount;
         setSellerShareToTradeInfo(tradeInfo, sellerId, parsedAmount);
     }
+    tradeInfo['platformFee'] = calculatePlatformFee(tradeInfo['checkoutAmount']);
     return tradeInfo;
 };
 const setSellerShareToTradeInfo = (tradeInfo, sellerId, amount) => {
@@ -130,10 +115,15 @@ const setSellerShareToTradeInfo = (tradeInfo, sellerId, amount) => {
 };
 const calculateFeelessAmount = (amount) => {
     const platformFee = calculatePlatformFee(amount);
-    return Math.round(amount - platformFee);
+    const paymentInfraProviderFee = calculatePaymentInfraProviderFee(amount);
+    return Math.round(amount - (platformFee + paymentInfraProviderFee));
 };
 const calculatePlatformFee = (amount) => {
-    const platformFeePercent = (0, config_1.getNumberValue)(config_1.ENV_VARS.PLATFORM_FEE_PERCENT);
-    return Math.round(amount * (platformFeePercent / 100));
+    return REFLECT_STRIPE_FEES_TO_SELLERS == 'false'
+        ? Math.round(amount * (PLATFORM_FEE_PERCENT / 100)) - PAYMENT_INFRA_PROVIDER_FEE_CONSTANT
+        : Math.round(amount * (PLATFORM_FEE_PERCENT / 100));
+};
+const calculatePaymentInfraProviderFee = (amount) => {
+    return Math.round(amount * (PAYMENT_INFRA_PROVIDER_FEE_PERCENT / 100)) + PAYMENT_INFRA_PROVIDER_FEE_CONSTANT;
 };
 //# sourceMappingURL=payment.service.js.map

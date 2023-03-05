@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleStripeWebhooks = exports.createPaymentAccount = exports.createPaymentAccountLink = exports.createProduct = exports.createPaymentIntent = void 0;
+exports.handleStripeWebhooks = exports.createPaymentAccount = exports.createPaymentAccountLink = exports.createPaymentIntent = void 0;
 const http_status_codes_1 = require("http-status-codes");
 const paymentService = __importStar(require("./payment.service"));
 const paymentWebhookHandler = __importStar(require("./payment.webhook-handler"));
@@ -39,18 +39,6 @@ const createPaymentIntent = async (req, res, next) => {
     }
 };
 exports.createPaymentIntent = createPaymentIntent;
-const createProduct = async (req, res, next) => {
-    try {
-        const { body } = req;
-        const result = await paymentService.createProduct(body);
-        res.status(http_status_codes_1.StatusCodes.CREATED).json(result);
-        next();
-    }
-    catch (error) {
-        next(error);
-    }
-};
-exports.createProduct = createProduct;
 const createPaymentAccountLink = async (req, res, next) => {
     try {
         const { body } = req;
@@ -76,9 +64,7 @@ const createPaymentAccount = async (req, res, next) => {
 exports.createPaymentAccount = createPaymentAccount;
 const handleStripeWebhooks = async (req, res, next) => {
     try {
-        console.log('Before execution');
         await paymentWebhookHandler.stripeWebhookExecutorWrapper(req);
-        console.log('After execution');
         res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: 'success' });
         next();
     }

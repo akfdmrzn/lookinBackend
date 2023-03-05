@@ -15,6 +15,7 @@ const dtoValidationMiddleware = (classSign) => async (req, res, next) => {
         });
         if (validationErrors.length > 0)
             throw new errors_1.DomainError(Object.assign(Object.assign({}, errors_1.API_ERRORS[errors_1.ApiError.BadInput]), { causes: validationErrors }));
+        next();
     }
     catch (error) {
         next(error);
