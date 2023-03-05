@@ -1,12 +1,16 @@
 {
   "name": "lookin-backend",
   "version": "0.0.1",
+  "engines": {
+    "node": "16.15.0"
+  },
   "description": "Lookin app TS backend project",
   "main": "src/main.ts",
   "repository": "https://github.com/TahaDgn/lookin-backend",
   "author": "TahaDgn",
   "private": true,
   "scripts": {
+  	"start" : "node dist/src/main.js",
     "launch": "tsc && node dist/src/main.js"
   },
   "dependencies": {
